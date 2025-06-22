@@ -17,6 +17,7 @@ types_entry = tk.Entry(root, width=60)
 progress = None
 
 def update_supported_types():
+    global SUPPORTED_TYPES
     raw = types_entry.get()
     extensions = {ext.strip().lower() for ext in raw.split(',') if ext.strip().startswith('.')}
     if not extensions:
@@ -123,8 +124,8 @@ def setup_gui():
     dest_entry.grid(row=1, column=1, pady=5)
     tk.Button(root, text="Browse", command=browse_destination).grid(row=1, column=2, padx=10)
 
-    #global progress
-    #progress = ttk.Progressbar(root, orient="horizontal", length=400, mode="determinate")
+    global progress
+    progress = ttk.Progressbar(root, orient="horizontal", length=400, mode="determinate")
     #progress.grid(row=2, column=0, columnspan=3, padx=10, pady=10)
 
     tk.Label(root, text="Supported Types (comma-separated)").grid(row=3, column=0, padx=10, pady=5, sticky='e')
