@@ -13,6 +13,7 @@ root = tk.Tk()
 source_entry = tk.Entry(root, width=60)
 dest_entry = tk.Entry(root, width=60)
 progress = None
+use_date_folder_var = tk.BooleanVar(value=True)
 
 # Supported media types
 FILE_TYPES = ('.jpg', '.jpeg', '.png', '.heic', '.mp4', '.mov', '.avi', '.AAE')
@@ -39,9 +40,9 @@ def get_datetime_taken(file_path):
     return datetime.fromtimestamp(os.path.getmtime(file_path))
 
 def sanitize_filename(dt):
-    return dt.strftime("%m-%d-%Y %H-%M-%S")
+    return dt.strftime("%m-%d-%Y %H_%M_%S")
 
-def transfer_files(source_folder, destination_folder, move=False):
+def transfer_files(source_folder, destination_folder, move=False, use_date_folder=True):
     total_files = sum(len(files) for _, _, files in os.walk(source_folder))
     progress["maximum"] = total_files
     progress["value"] = 0
@@ -53,10 +54,13 @@ def transfer_files(source_folder, destination_folder, move=False):
             if file.lower().endswith(FILE_TYPES):
                 source_path = os.path.join(root_dir, file)
 
-                # Determine timestamp and destination subfolder
-                dt_taken = get_datetime_taken(source_path)
-                date_folder = dt_taken.strftime("%Y-%m-%d")
-                subfolder = os.path.join(destination_folder, date_folder)
+                # Determine timestamp and destination subfolder (if enabled)
+                if use_date_folder:
+                    dt_taken = get_datetime_taken(source_path)
+                    date_folder = dt_taken.strftime("%Y-%m-%d")
+                    subfolder = os.path.join(destination_folder, date_folder)
+                else:
+                    subfolder = destination_folder
                 os.makedirs(subfolder, exist_ok=True)
 
                 filename = sanitize_filename(dt_taken)
@@ -104,14 +108,16 @@ def start_transfer(move=False):
         messagebox.showerror("Error", "Please select valid source and destination folders.")
         return
 
+    use_date_folder = use_date_folder_var.get()
+
     try:
-        count = transfer_files(src, dst, move=move)
+        count = transfer_files(src, dst, move=move, use_date_folder=use_date_folder)
         messagebox.showinfo("Success", f"{'Moved' if move else 'Copied'} {count} files.")
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred:\n{e}")
 
 def setup_gui():
-    root.title("iPhone Media Transfer Tool")
+    root.title("Media Transfer Tool")
 
     tk.Label(root, text="Source Folder").grid(row=0, column=0, padx=10, pady=5, sticky='e')
     source_entry.grid(row=0, column=1, pady=5)
@@ -121,12 +127,15 @@ def setup_gui():
     dest_entry.grid(row=1, column=1, pady=5)
     tk.Button(root, text="Browse", command=browse_destination).grid(row=1, column=2, padx=10)
 
+    use_date_checkbox = tk.Checkbutton(root, text="Use Date Subfolder", variable=use_date_folder_var)
+    use_date_checkbox.grid(row=2, column=0, columnspan=3, pady=5)
+
     global progress
     progress = ttk.Progressbar(root, orient="horizontal", length=400, mode="determinate")
-    progress.grid(row=2, column=0, columnspan=3, padx=10, pady=10)
+    progress.grid(row=3, column=0, columnspan=3, padx=10, pady=10)
 
-    tk.Button(root, text="Copy Files", command=lambda: start_transfer(move=False), bg="lightblue").grid(row=3, column=1, pady=10, sticky='w')
-    tk.Button(root, text="Move Files", command=lambda: start_transfer(move=True), bg="lightgreen").grid(row=3, column=1, pady=10, sticky='e')
+    tk.Button(root, text="Copy Files", command=lambda: start_transfer(move=False), bg="lightblue").grid(row=4, column=1, pady=10, sticky='w')
+    tk.Button(root, text="Move Files", command=lambda: start_transfer(move=True), bg="lightgreen").grid(row=4, column=1, pady=10, sticky='e')
 
     # Drag and drop support 
     try:
