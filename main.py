@@ -40,7 +40,7 @@ def get_datetime_taken(file_path):
     return datetime.fromtimestamp(os.path.getmtime(file_path))
 
 def sanitize_filename(dt):
-    return dt.strftime("%m-%d-%Y %H_%M_%S")
+    return dt.strftime("%Y-%m-%d %H_%M_%S")
 
 def transfer_files(source_folder, destination_folder, move=False, use_date_folder=True):
     total_files = sum(len(files) for _, _, files in os.walk(source_folder))
@@ -54,16 +54,19 @@ def transfer_files(source_folder, destination_folder, move=False, use_date_folde
             if file.lower().endswith(FILE_TYPES):
                 source_path = os.path.join(root_dir, file)
 
-                # Determine timestamp and destination subfolder (if enabled)
                 if use_date_folder:
                     dt_taken = get_datetime_taken(source_path)
                     date_folder = dt_taken.strftime("%Y-%m-%d")
                     subfolder = os.path.join(destination_folder, date_folder)
+                    os.makedirs(subfolder, exist_ok=True)
+                    filename = sanitize_filename(dt_taken)
                 else:
+                    dt_taken = get_datetime_taken(source_path)
                     subfolder = destination_folder
-                os.makedirs(subfolder, exist_ok=True)
+                    os.makedirs(subfolder, exist_ok=True)
+                    #filename = os.path.splitext(file)[0]
+                    filename = sanitize_filename(dt_taken)
 
-                filename = sanitize_filename(dt_taken)
                 ext = os.path.splitext(file)[1]
                 destination_path = os.path.join(subfolder, f"{filename}{ext}")
 
@@ -81,7 +84,6 @@ def transfer_files(source_folder, destination_folder, move=False, use_date_folde
                 file_count += 1
                 progress["value"] += 1
                 root.update_idletasks()
-
     return file_count
 
 def browse_source():
