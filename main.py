@@ -3,6 +3,11 @@ import shutil
 import tkinter as tk
 from tkinter import filedialog, messagebox
 
+# Variables
+root = tk.Tk()
+source_entry = tk.Entry(root, width=60)
+dest_entry = tk.Entry(root, width=60)
+
 # File types to transfer
 FILE_TYPES = ('.jpg', '.jpeg', '.png', '.heic', '.mp4', '.mov', '.avi')
 
@@ -57,21 +62,22 @@ def start_transfer(move=False):
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred:\n{e}")
 
-# GUI setup
-root = tk.Tk()
-root.title("iPhone Media Transfer Tool")
+def main():
+    # GUI setup
+    root.title("Media Transfer Tool")
 
-tk.Label(root, text="Source Folder (iPhone)").grid(row=0, column=0, padx=10, pady=5, sticky='e')
-source_entry = tk.Entry(root, width=60)
-source_entry.grid(row=0, column=1, pady=5)
-tk.Button(root, text="Browse", command=browse_source).grid(row=0, column=2, padx=10)
+    tk.Label(root, text="Source Folder").grid(row=0, column=0, padx=10, pady=5, sticky='e')
+    source_entry.grid(row=0, column=1, pady=5)
+    tk.Button(root, text="Browse", command=browse_source).grid(row=0, column=2, padx=10)
 
-tk.Label(root, text="Destination Folder").grid(row=1, column=0, padx=10, pady=5, sticky='e')
-dest_entry = tk.Entry(root, width=60)
-dest_entry.grid(row=1, column=1, pady=5)
-tk.Button(root, text="Browse", command=browse_destination).grid(row=1, column=2, padx=10)
+    tk.Label(root, text="Destination Folder").grid(row=1, column=0, padx=10, pady=5, sticky='e')
+    dest_entry.grid(row=1, column=1, pady=5)
+    tk.Button(root, text="Browse", command=browse_destination).grid(row=1, column=2, padx=10)
 
-tk.Button(root, text="Copy Files", command=lambda: start_transfer(move=False), bg="lightblue").grid(row=2, column=1, pady=10, sticky='w')
-tk.Button(root, text="Move Files", command=lambda: start_transfer(move=True), bg="lightgreen").grid(row=2, column=1, pady=10, sticky='e')
+    tk.Button(root, text="Copy Files", command=lambda: start_transfer(move=False), bg="lightblue").grid(row=2, column=1, pady=10, sticky='w')
+    tk.Button(root, text="Move Files", command=lambda: start_transfer(move=True), bg="lightgreen").grid(row=2, column=1, pady=10, sticky='e')
 
-root.mainloop()
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()
