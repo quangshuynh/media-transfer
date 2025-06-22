@@ -15,7 +15,7 @@ dest_entry = tk.Entry(root, width=60)
 progress = None
 
 # Supported media types
-FILE_TYPES = ('.jpg', '.jpeg', '.png', '.heic', '.mp4', '.mov', '.avi')
+FILE_TYPES = ('.jpg', '.jpeg', '.png', '.heic', '.mp4', '.mov', '.avi', '.AAE')
 
 
 def get_datetime_taken(file_path):
