@@ -6,39 +6,35 @@ from datetime import datetime
 from PIL import Image
 from PIL.ExifTags import TAGS
 import cv2
-import tkinterdnd2 as tkdnd
+
 
 # Variables
-SUPPORTED_TYPES = {'.jpg', '.jpeg', '.png', '.heic', '.mp4', '.mov', '.avi'}
 root = tk.Tk()
 source_entry = tk.Entry(root, width=60)
 dest_entry = tk.Entry(root, width=60)
-types_entry = tk.Entry(root, width=60)
 progress = None
 
-def update_supported_types():
-    global SUPPORTED_TYPES
-    raw = types_entry.get()
-    extensions = {ext.strip().lower() for ext in raw.split(',') if ext.strip().startswith('.')}
-    if not extensions:
-        messagebox.showerror("Invalid Input", "You must enter at least one valid extension (e.g., .jpg,.mp4)")
-        return
-    SUPPORTED_TYPES.clear()
-    SUPPORTED_TYPES.update(extensions)
-    messagebox.showinfo("Updated", f"Supported file types are now:\n{', '.join(SUPPORTED_TYPES)}")
+# Supported media types
+FILE_TYPES = ('.jpg', '.jpeg', '.png', '.heic', '.mp4', '.mov', '.avi')
+
 
 def get_datetime_taken(file_path):
+    """Try to extract datetime from metadata or fallback to file creation time"""
     try:
         ext = os.path.splitext(file_path)[1].lower()
-        if ext in {'.jpg', '.jpeg', '.png', '.heic'}:
+        if ext in ('.jpg', '.jpeg', '.png', '.heic'):
             image = Image.open(file_path)
             exif_data = image._getexif()
             if exif_data:
                 for tag, value in exif_data.items():
-                    if TAGS.get(tag) == 'DateTimeOriginal':
+                    tag_name = TAGS.get(tag, tag)
+                    if tag_name == 'DateTimeOriginal':
                         return datetime.strptime(value, '%Y:%m:%d %H:%M:%S')
-        elif ext in {'.mp4', '.mov', '.avi'}:
-            return datetime.fromtimestamp(os.path.getmtime(file_path))
+        elif ext in ('.mp4', '.mov', '.avi'):
+            vid = cv2.VideoCapture(file_path)
+            if vid and vid.get(cv2.CAP_PROP_POS_MSEC):
+                mtime = os.path.getmtime(file_path)
+                return datetime.fromtimestamp(mtime)
     except:
         pass
     return datetime.fromtimestamp(os.path.getmtime(file_path))
@@ -53,11 +49,12 @@ def transfer_files(source_folder, destination_folder, move=False):
     root.update_idletasks()
 
     file_count = 0
-    for root_dir, _, files in os.walk(source_folder):
+    for root_dir, dirs, files in os.walk(source_folder):
         for file in files:
-            if file.lower().endswith(tuple(SUPPORTED_TYPES)):
+            if file.lower().endswith(FILE_TYPES):
                 source_path = os.path.join(root_dir, file)
 
+                # Determine timestamp and destination subfolder
                 dt_taken = get_datetime_taken(source_path)
                 date_folder = dt_taken.strftime("%Y-%m-%d")
                 subfolder = os.path.join(destination_folder, date_folder)
@@ -67,6 +64,7 @@ def transfer_files(source_folder, destination_folder, move=False):
                 ext = os.path.splitext(file)[1]
                 destination_path = os.path.join(subfolder, f"{filename}{ext}")
 
+                # Prevent overwriting
                 counter = 1
                 while os.path.exists(destination_path):
                     destination_path = os.path.join(subfolder, f"{filename}_{counter}{ext}")
@@ -114,7 +112,7 @@ def start_transfer(move=False):
         messagebox.showerror("Error", f"An error occurred:\n{e}")
 
 def setup_gui():
-    root.title("Media Transfer Tool")
+    root.title("iPhone Media Transfer Tool")
 
     tk.Label(root, text="Source Folder").grid(row=0, column=0, padx=10, pady=5, sticky='e')
     source_entry.grid(row=0, column=1, pady=5)
@@ -126,21 +124,20 @@ def setup_gui():
 
     global progress
     progress = ttk.Progressbar(root, orient="horizontal", length=400, mode="determinate")
-    #progress.grid(row=2, column=0, columnspan=3, padx=10, pady=10)
+    progress.grid(row=2, column=0, columnspan=3, padx=10, pady=10)
 
-    tk.Label(root, text="Supported Types (comma-separated)").grid(row=3, column=0, padx=10, pady=5, sticky='e')
-    types_entry.grid(row=3, column=1, pady=5)
-    types_entry.insert(0, ','.join(sorted(SUPPORTED_TYPES)))
-    tk.Button(root, text="Update", command=update_supported_types).grid(row=3, column=2, padx=10)
+    tk.Button(root, text="Copy Files", command=lambda: start_transfer(move=False), bg="lightblue").grid(row=3, column=1, pady=10, sticky='w')
+    tk.Button(root, text="Move Files", command=lambda: start_transfer(move=True), bg="lightgreen").grid(row=3, column=1, pady=10, sticky='e')
 
-    tk.Button(root, text="Copy Files", command=lambda: start_transfer(move=False), bg="lightblue").grid(row=4, column=1, pady=10, sticky='w')
-    tk.Button(root, text="Move Files", command=lambda: start_transfer(move=True), bg="lightgreen").grid(row=4, column=1, pady=10, sticky='e')
-
+    # Drag and drop support 
     try:
+        import tkinterdnd2 as tkdnd
         dnd = tkdnd.TkinterDnD.Tk()
-        dnd.withdraw()
+        dnd.withdraw() 
+
         source_entry.drop_target_register(tkdnd.DND_FILES)
         source_entry.dnd_bind('<<Drop>>', lambda e: on_drop(e, source_entry))
+
         dest_entry.drop_target_register(tkdnd.DND_FILES)
         dest_entry.dnd_bind('<<Drop>>', lambda e: on_drop(e, dest_entry))
     except:
