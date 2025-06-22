@@ -19,7 +19,6 @@ FILE_TYPES = ('.jpg', '.jpeg', '.png', '.heic', '.mp4', '.mov', '.avi')
 
 
 def get_datetime_taken(file_path):
-    """Try to extract datetime from metadata or fallback to file creation time"""
     try:
         ext = os.path.splitext(file_path)[1].lower()
         if ext in ('.jpg', '.jpeg', '.png', '.heic'):
